@@ -27,7 +27,7 @@ from . import evaluate as ev
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
-STATUS_BGR = {"OK": (90, 200, 90), "WATCH": (0, 190, 255), "ALARM": (60, 60, 230), "REVIEW": (230, 160, 60)}
+STATUS_BGR = {"OK": (180, 167, 154), "WATCH": (65, 176, 245), "ALARM": (94, 107, 255), "REVIEW": (250, 139, 167)}
 
 
 def main(run_eval: bool = False):

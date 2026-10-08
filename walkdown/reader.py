@@ -227,15 +227,38 @@ def annotate(img_bgr: np.ndarray, reading: Reading, spec: GaugeSpec, status_colo
             pts = cv2.transform(pts, inv)
         return pts.reshape(-1, 2)
 
-    ring = [(cx + r * math.cos(t), cy - r * math.sin(t)) for t in np.linspace(0, 2 * np.pi, 120)]
-    cv2.polylines(out, [to_img(ring).astype(np.int32)], True, (255, 200, 0), 2, cv2.LINE_AA)
+    # HUD-style overlay, drawn at 2x and downsampled for clean anti-aliasing.
+    # No burned-in text: the dashboard shows the numbers.
+    k = 2
+    big = cv2.resize(out, None, fx=k, fy=k, interpolation=cv2.INTER_CUBIC)
+    layer = big.copy()
+    S = lambda pts: (to_img(pts) * k).astype(np.int32)
+
+    # dial outline
+    ring = [(cx + r * math.cos(t), cy - r * math.sin(t)) for t in np.linspace(0, 2 * np.pi, 160)]
+    cv2.polylines(layer, [S(ring)], True, (255, 255, 255), 2 * k, cv2.LINE_AA)
+    # sweep from the gauge minimum to the detected value, in the status colour
+    a0, a1 = spec.start_angle_deg, reading.angle_deg
+    arc = [(cx + r * 1.0 * math.cos(math.radians(t)), cy - r * 1.0 * math.sin(math.radians(t)))
+           for t in np.linspace(a0, a1, max(8, int(abs(a0 - a1))))]
+    cv2.polylines(layer, [S(arc)], False, status_color, 5 * k, cv2.LINE_AA)
+    out_big = cv2.addWeighted(layer, 0.85, big, 0.15, 0)
+
+    # detected needle + hub
     a = math.radians(reading.angle_deg)
-    (c0, tip) = to_img([(cx, cy), (cx + r * 0.9 * math.cos(a), cy - r * 0.9 * math.sin(a))])
-    c0, tip = tuple(int(v) for v in c0), tuple(int(v) for v in tip)
-    cv2.line(out, c0, tip, status_color, 3, cv2.LINE_AA)
-    cv2.circle(out, c0, 5, status_color, -1, cv2.LINE_AA)
-    unit = spec.unit.replace("\u00b0", "deg ")
-    label = f"{reading.value:.1f} {unit}  conf {reading.confidence:.2f}"
-    cv2.rectangle(out, (8, 8), (16 + 11 * len(label), 40), (20, 20, 20), -1)
-    cv2.putText(out, label, (14, 31), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2, cv2.LINE_AA)
+    c0, tip = S([(cx, cy), (cx + r * 0.92 * math.cos(a), cy - r * 0.92 * math.sin(a))])
+    cv2.line(out_big, tuple(c0), tuple(tip), (20, 20, 20), 7 * k, cv2.LINE_AA)
+    cv2.line(out_big, tuple(c0), tuple(tip), status_color, 3 * k, cv2.LINE_AA)
+    cv2.circle(out_big, tuple(tip), 5 * k, status_color, -1, cv2.LINE_AA)
+    cv2.circle(out_big, tuple(c0), 6 * k, status_color, -1, cv2.LINE_AA)
+
+    # corner brackets around the detected dial
+    box = S([(cx - r * 1.12, cy - r * 1.12), (cx + r * 1.12, cy + r * 1.12)])
+    (x0, y0), (x1, y1) = box[0], box[1]
+    L = int(r * 0.22 * k)
+    for (x, y, dx, dy) in [(x0, y0, 1, 1), (x1, y0, -1, 1), (x0, y1, 1, -1), (x1, y1, -1, -1)]:
+        cv2.line(out_big, (x, y), (x + dx * L, y), (255, 255, 255), 2 * k, cv2.LINE_AA)
+        cv2.line(out_big, (x, y), (x, y + dy * L), (255, 255, 255), 2 * k, cv2.LINE_AA)
+
+    out = cv2.resize(out_big, (img_bgr.shape[1], img_bgr.shape[0]), interpolation=cv2.INTER_AREA)
     return out

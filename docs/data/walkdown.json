@@ -16,7 +16,7 @@
     "review": 1,
     "trend_flags": 2,
     "hazardous_stops": 11,
-    "processing_seconds": 0.84
+    "processing_seconds": 0.95
   },
   "confidence_threshold": 0.2,
   "points": [
