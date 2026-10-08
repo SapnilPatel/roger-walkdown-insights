@@ -1,0 +1,4 @@
+id,asset_tag,asset,area,priority,type,reading,normal_range,action,evidence
+WD-0417-01,PI-3105,Crude export pump discharge,"Export pumps, Deck C",P1,ALARM,38.1 bar,60-80 bar,"Reading 38.1 bar is below the alarm limit. Notify the control room now and verify against the control-system transmitter. It was steady around 72 bar on previous walkdowns, so this is a sudden change.",frames/PI-3105_seen.jpg
+WD-0417-02,PI-2350,Compressor discharge pressure,"Gas compression, Deck C",P2,WATCH,128.2 bar,95-120 bar,Schedule inspection before the next walkdown; review trend with process engineering.,frames/PI-2350_seen.jpg
+WD-0417-03,PI-5310,Fuel gas supply pressure,"Utilities, Deck A",P3,REVIEW,60.0 bar,25-35 bar,Reading not trusted automatically. Operator to confirm from live view; clean or re-shoot the gauge.,frames/PI-5310_seen.jpg

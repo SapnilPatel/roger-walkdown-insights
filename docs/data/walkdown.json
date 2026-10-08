@@ -1,0 +1,744 @@
+{
+  "platform": {
+    "name": "Demo Platform Alpha",
+    "type": "Offshore production platform (fictional)",
+    "walkdown_id": "WD-0417",
+    "operator_station": "Control room, Deck A (safe area)",
+    "robot": "Humanoid inspection unit, teleoperated",
+    "date": "2026-10-07",
+    "shift": "Day shift"
+  },
+  "summary": {
+    "stops": 12,
+    "ok": 9,
+    "watch": 1,
+    "alarm": 1,
+    "review": 1,
+    "trend_flags": 2,
+    "hazardous_stops": 11,
+    "processing_seconds": 0.84
+  },
+  "confidence_threshold": 0.2,
+  "points": [
+    {
+      "tag": "PI-2101",
+      "name": "HP separator pressure",
+      "area": "Separation module, Deck B",
+      "hazard": "Hydrocarbon release zone",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 100,
+        "unit": "bar",
+        "major_step": 10,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        55,
+        70
+      ],
+      "alarm": [
+        40,
+        85
+      ],
+      "condition": "clean",
+      "history": [
+        62,
+        64,
+        63,
+        62,
+        63
+      ],
+      "severity": 0.6,
+      "seed": 10,
+      "reading": {
+        "value": 62.99,
+        "angle_deg": 54.93,
+        "confidence": 0.947,
+        "center": [
+          231.0,
+          247.0
+        ],
+        "radius": 189.3,
+        "method": "hough",
+        "contrast": 0.8629,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-2101.jpg",
+      "frame_annotated": "frames/PI-2101_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.027,
+        "previous_avg": 62.67
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 63.0
+    },
+    {
+      "tag": "PI-2104",
+      "name": "LP separator pressure",
+      "area": "Separation module, Deck B",
+      "hazard": "Hydrocarbon release zone",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 25,
+        "unit": "bar",
+        "major_step": 5,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        6,
+        12
+      ],
+      "alarm": [
+        3,
+        18
+      ],
+      "condition": "glare",
+      "history": [
+        9.0,
+        9.4,
+        9.1,
+        9.3,
+        9.2
+      ],
+      "severity": 0.6,
+      "seed": 11,
+      "reading": {
+        "value": 9.25,
+        "angle_deg": 125.14,
+        "confidence": 0.36,
+        "center": [
+          240.0,
+          245.0
+        ],
+        "radius": 188.1,
+        "method": "hough",
+        "contrast": 0.2686,
+        "dip_width_deg": 3.0
+      },
+      "frame": "frames/PI-2104.jpg",
+      "frame_annotated": "frames/PI-2104_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.024,
+        "previous_avg": 9.2
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 9.2
+    },
+    {
+      "tag": "TI-2210",
+      "name": "Glycol contactor outlet temp",
+      "area": "Gas dehydration, Deck B",
+      "hazard": "Hot surfaces, hydrocarbon zone",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 150,
+        "unit": "°C",
+        "major_step": 25,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        35,
+        55
+      ],
+      "alarm": [
+        20,
+        75
+      ],
+      "condition": "clean",
+      "history": [
+        44,
+        45,
+        46,
+        46,
+        47
+      ],
+      "severity": 0.6,
+      "seed": 12,
+      "reading": {
+        "value": 47.22,
+        "angle_deg": 140.0,
+        "confidence": 0.946,
+        "center": [
+          251.0,
+          225.0
+        ],
+        "radius": 188.3,
+        "method": "hough",
+        "contrast": 0.8689,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/TI-2210.jpg",
+      "frame_annotated": "frames/TI-2210_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.631,
+        "previous_avg": 46.33
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 47.0
+    },
+    {
+      "tag": "PI-2350",
+      "name": "Compressor discharge pressure",
+      "area": "Gas compression, Deck C",
+      "hazard": "High-pressure gas, noise > 105 dB",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 160,
+        "unit": "bar",
+        "major_step": 20,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        95,
+        120
+      ],
+      "alarm": [
+        80,
+        135
+      ],
+      "condition": "low_light",
+      "history": [
+        112,
+        115,
+        118,
+        121,
+        124
+      ],
+      "severity": 0.6,
+      "seed": 13,
+      "reading": {
+        "value": 128.25,
+        "angle_deg": 8.58,
+        "confidence": 0.95,
+        "center": [
+          248.0,
+          226.0
+        ],
+        "radius": 184.6,
+        "method": "hough",
+        "contrast": 0.7999,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-2350.jpg",
+      "frame_annotated": "frames/PI-2350_seen.jpg",
+      "raw_status": "WATCH",
+      "status": "WATCH",
+      "trend": {
+        "slope_per_walkdown": 3.179,
+        "previous_avg": 121.0,
+        "flag": "DRIFT",
+        "walkdowns_to_alarm": 2.1,
+        "note": "Rising steadily about 3.2 per walkdown. At this rate it reaches the alarm limit (135) in about 2 walkdowns."
+      },
+      "flags": [
+        "WATCH",
+        "DRIFT"
+      ],
+      "recommendation": "Schedule inspection before the next walkdown; review trend with process engineering.",
+      "ground_truth": 128.0
+    },
+    {
+      "tag": "PI-2352",
+      "name": "Compressor seal gas pressure",
+      "area": "Gas compression, Deck C",
+      "hazard": "High-pressure gas, noise > 105 dB",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 40,
+        "unit": "bar",
+        "major_step": 5,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        18,
+        26
+      ],
+      "alarm": [
+        14,
+        30
+      ],
+      "condition": "blur",
+      "history": [
+        21,
+        22,
+        21.5,
+        21,
+        22
+      ],
+      "severity": 0.6,
+      "seed": 14,
+      "reading": {
+        "value": 21.5,
+        "angle_deg": 79.91,
+        "confidence": 0.958,
+        "center": [
+          235.0,
+          223.0
+        ],
+        "radius": 184.8,
+        "method": "hough",
+        "contrast": 0.8792,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-2352.jpg",
+      "frame_annotated": "frames/PI-2352_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.057,
+        "previous_avg": 21.5
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 21.5
+    },
+    {
+      "tag": "PI-3101",
+      "name": "Crude export pump suction",
+      "area": "Export pumps, Deck C",
+      "hazard": "Rotating equipment",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 16,
+        "unit": "bar",
+        "major_step": 2,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        3,
+        8
+      ],
+      "alarm": [
+        2,
+        11
+      ],
+      "condition": "clean",
+      "history": [
+        5.5,
+        5.2,
+        5.6,
+        5.3,
+        5.5
+      ],
+      "severity": 0.6,
+      "seed": 15,
+      "reading": {
+        "value": 5.4,
+        "angle_deg": 133.82,
+        "confidence": 0.982,
+        "center": [
+          248.0,
+          231.0
+        ],
+        "radius": 188.3,
+        "method": "hough",
+        "contrast": 0.8665,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-3101.jpg",
+      "frame_annotated": "frames/PI-3101_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.003,
+        "previous_avg": 5.47
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 5.4
+    },
+    {
+      "tag": "PI-3105",
+      "name": "Crude export pump discharge",
+      "area": "Export pumps, Deck C",
+      "hazard": "Rotating equipment",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 100,
+        "unit": "bar",
+        "major_step": 10,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        60,
+        80
+      ],
+      "alarm": [
+        45,
+        90
+      ],
+      "condition": "smoke",
+      "history": [
+        72,
+        71,
+        73,
+        72,
+        71
+      ],
+      "severity": 0.6,
+      "seed": 16,
+      "reading": {
+        "value": 38.15,
+        "angle_deg": 121.99,
+        "confidence": 0.891,
+        "center": [
+          234.0,
+          245.0
+        ],
+        "radius": 189.3,
+        "method": "hough",
+        "contrast": 0.3776,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-3105.jpg",
+      "frame_annotated": "frames/PI-3105_seen.jpg",
+      "raw_status": "ALARM",
+      "status": "ALARM",
+      "trend": {
+        "slope_per_walkdown": -4.864,
+        "previous_avg": 72.0,
+        "flag": "STEP_CHANGE",
+        "note": "Jumped from about 72.0 to 38.1 since the last walkdowns. Check for a process upset, a stuck valve or a failing transmitter."
+      },
+      "flags": [
+        "ALARM",
+        "STEP_CHANGE"
+      ],
+      "recommendation": "Reading 38.1 bar is below the alarm limit. Notify the control room now and verify against the control-system transmitter. It was steady around 72 bar on previous walkdowns, so this is a sudden change.",
+      "ground_truth": 38.0
+    },
+    {
+      "tag": "PI-4401",
+      "name": "Wellhead A-3 tubing pressure",
+      "area": "Wellbay, Deck D",
+      "hazard": "H2S area, breathing apparatus required",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 250,
+        "unit": "bar",
+        "major_step": 50,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        140,
+        190
+      ],
+      "alarm": [
+        110,
+        215
+      ],
+      "condition": "clean",
+      "history": [
+        170,
+        169,
+        171,
+        168,
+        169
+      ],
+      "severity": 0.6,
+      "seed": 17,
+      "reading": {
+        "value": 168.42,
+        "angle_deg": 43.11,
+        "confidence": 0.932,
+        "center": [
+          229.0,
+          236.0
+        ],
+        "radius": 186.1,
+        "method": "hough",
+        "contrast": 0.866,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-4401.jpg",
+      "frame_annotated": "frames/PI-4401_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": -0.311,
+        "previous_avg": 169.33
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 168.0
+    },
+    {
+      "tag": "PI-4402",
+      "name": "Wellhead A-3 annulus (A) pressure",
+      "area": "Wellbay, Deck D",
+      "hazard": "H2S area, breathing apparatus required",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 100,
+        "unit": "bar",
+        "major_step": 10,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        0,
+        20
+      ],
+      "alarm": [
+        0,
+        35
+      ],
+      "condition": "tilt",
+      "history": [
+        10,
+        11,
+        11,
+        12,
+        12
+      ],
+      "severity": 0.6,
+      "seed": 18,
+      "reading": {
+        "value": 12.01,
+        "angle_deg": 192.57,
+        "confidence": 0.964,
+        "center": [
+          227.0,
+          246.0
+        ],
+        "radius": 184.3,
+        "method": "hough+rectified",
+        "contrast": 0.8463,
+        "dip_width_deg": 5.0
+      },
+      "frame": "frames/PI-4402.jpg",
+      "frame_annotated": "frames/PI-4402_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.401,
+        "previous_avg": 11.67
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 12.0
+    },
+    {
+      "tag": "PI-5201",
+      "name": "Firewater ring main pressure",
+      "area": "Utilities, Deck A",
+      "hazard": "Low hazard (reference point)",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 25,
+        "unit": "bar",
+        "major_step": 5,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        10,
+        14
+      ],
+      "alarm": [
+        8,
+        16
+      ],
+      "condition": "clean",
+      "history": [
+        12.0,
+        12.2,
+        12.1,
+        12.0,
+        12.1
+      ],
+      "severity": 0.6,
+      "seed": 19,
+      "reading": {
+        "value": 12.12,
+        "angle_deg": 94.06,
+        "confidence": 0.97,
+        "center": [
+          251.0,
+          234.0
+        ],
+        "radius": 189.1,
+        "method": "hough",
+        "contrast": 0.8764,
+        "dip_width_deg": 4.5
+      },
+      "frame": "frames/PI-5201.jpg",
+      "frame_annotated": "frames/PI-5201_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.006,
+        "previous_avg": 12.07
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 12.1
+    },
+    {
+      "tag": "PI-5310",
+      "name": "Fuel gas supply pressure",
+      "area": "Utilities, Deck A",
+      "hazard": "Hydrocarbon release zone",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 60,
+        "unit": "bar",
+        "major_step": 10,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        25,
+        35
+      ],
+      "alarm": [
+        18,
+        42
+      ],
+      "condition": "glare",
+      "history": [
+        29,
+        30,
+        29,
+        30,
+        29
+      ],
+      "severity": 1.0,
+      "seed": 1,
+      "reading": {
+        "value": 60.0,
+        "angle_deg": -46.03,
+        "confidence": 0.019,
+        "center": [
+          252.0,
+          227.0
+        ],
+        "radius": 186.2,
+        "method": "hough",
+        "contrast": 0.1995,
+        "dip_width_deg": 38.5
+      },
+      "frame": "frames/PI-5310.jpg",
+      "frame_annotated": "frames/PI-5310_seen.jpg",
+      "raw_status": "ALARM",
+      "status": "REVIEW",
+      "trend": null,
+      "flags": [
+        "REVIEW"
+      ],
+      "recommendation": "Reading not trusted automatically. Operator to confirm from live view; clean or re-shoot the gauge.",
+      "ground_truth": 29.0
+    },
+    {
+      "tag": "TI-5402",
+      "name": "Lube oil cooler outlet temp",
+      "area": "Utilities, Deck A",
+      "hazard": "Hot surfaces",
+      "gauge": {
+        "min_value": 0,
+        "max_value": 120,
+        "unit": "°C",
+        "major_step": 20,
+        "start_angle_deg": 225.0,
+        "sweep_deg": 270.0
+      },
+      "normal": [
+        40,
+        60
+      ],
+      "alarm": [
+        30,
+        75
+      ],
+      "condition": "occluded",
+      "history": [
+        50,
+        51,
+        52,
+        51,
+        52
+      ],
+      "severity": 0.6,
+      "seed": 21,
+      "reading": {
+        "value": 52.08,
+        "angle_deg": 107.81,
+        "confidence": 0.74,
+        "center": [
+          242.0,
+          237.0
+        ],
+        "radius": 187.3,
+        "method": "hough",
+        "contrast": 0.3266,
+        "dip_width_deg": 6.0
+      },
+      "frame": "frames/TI-5402.jpg",
+      "frame_annotated": "frames/TI-5402_seen.jpg",
+      "raw_status": "OK",
+      "status": "OK",
+      "trend": {
+        "slope_per_walkdown": 0.354,
+        "previous_avg": 51.67
+      },
+      "flags": [],
+      "recommendation": "",
+      "ground_truth": 52.0
+    }
+  ],
+  "work_orders": [
+    {
+      "id": "WD-0417-01",
+      "asset_tag": "PI-3105",
+      "asset": "Crude export pump discharge",
+      "area": "Export pumps, Deck C",
+      "priority": "P1",
+      "type": "ALARM",
+      "reading": "38.1 bar",
+      "normal_range": "60-80 bar",
+      "action": "Reading 38.1 bar is below the alarm limit. Notify the control room now and verify against the control-system transmitter. It was steady around 72 bar on previous walkdowns, so this is a sudden change.",
+      "evidence": "frames/PI-3105_seen.jpg"
+    },
+    {
+      "id": "WD-0417-02",
+      "asset_tag": "PI-2350",
+      "asset": "Compressor discharge pressure",
+      "area": "Gas compression, Deck C",
+      "priority": "P2",
+      "type": "WATCH",
+      "reading": "128.2 bar",
+      "normal_range": "95-120 bar",
+      "action": "Schedule inspection before the next walkdown; review trend with process engineering.",
+      "evidence": "frames/PI-2350_seen.jpg"
+    },
+    {
+      "id": "WD-0417-03",
+      "asset_tag": "PI-5310",
+      "asset": "Fuel gas supply pressure",
+      "area": "Utilities, Deck A",
+      "priority": "P3",
+      "type": "REVIEW",
+      "reading": "60.0 bar",
+      "normal_range": "25-35 bar",
+      "action": "Reading not trusted automatically. Operator to confirm from live view; clean or re-shoot the gauge.",
+      "evidence": "frames/PI-5310_seen.jpg"
+    }
+  ]
+}

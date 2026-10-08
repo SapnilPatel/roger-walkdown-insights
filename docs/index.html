@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roger Walkdown Insights</title>
+<meta name="description" content="Concept demo: turning a teleoperated humanoid's inspection walkdown into gauge readings, alarms, trends and work orders.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: control-room console. Summary strip, then the action list, then the route
+   with an inspector pane, then the evidence that the reads can be trusted.
+   Colour follows high-performance HMI practice (ISA-101): neutral greys for normal,
+   colour reserved for things that need a person. */
+:root {
+  --bg: #eef0f1;
+  --panel: #f8f9f9;
+  --ink: #1b2226;
+  --muted: #5d686e;
+  --line: #d3d8db;
+  --steel: #2f4a57;          /* accent: interactive + headings */
+  --steel-soft: #dfe7eb;
+  --ok: #7c878c;             /* normal is deliberately quiet */
+  --watch: #b7791f;
+  --watch-soft: #f6ead6;
+  --alarm: #c2362f;
+  --alarm-soft: #f7dfdc;
+  --review: #3d5fa8;
+  --review-soft: #e0e7f6;
+  --band: rgba(47, 74, 87, 0.10);
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171a; --panel: #192024; --ink: #e3e8ea; --muted: #94a1a7; --line: #2c363b;
+    --steel: #8fb3c4; --steel-soft: #22313a; --ok: #8a969b;
+    --watch: #e2a647; --watch-soft: #3a2d17; --alarm: #ef6a61; --alarm-soft: #3f1d1b;
+    --review: #8ea9e8; --review-soft: #1f2a44; --band: rgba(143, 179, 196, 0.12);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171a; --panel: #192024; --ink: #e3e8ea; --muted: #94a1a7; --line: #2c363b;
+  --steel: #8fb3c4; --steel-soft: #22313a; --ok: #8a969b;
+  --watch: #e2a647; --watch-soft: #3a2d17; --alarm: #ef6a61; --alarm-soft: #3f1d1b;
+  --review: #8ea9e8; --review-soft: #1f2a44; --band: rgba(143, 179, 196, 0.12);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 0 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: 0.005em; }
+h2 { font-size: 1.45rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; }
+.mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.label { font: 600 0.7rem/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+a { color: var(--steel); }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+/* concept banner */
+.concept { background: var(--steel); color: var(--panel); font-size: 0.82rem; }
+.concept .wrap { padding-block: 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.concept strong { font-weight: 600; }
+
+/* header */
+header.top { display: grid; gap: 18px; padding-block: 28px 22px; border-bottom: 1px solid var(--line); }
+.head-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: end; }
+h1 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 700; line-height: 1.1; }
+.sub { color: var(--muted); max-width: 62ch; margin-top: 6px; }
+.meta { display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-size: 0.85rem; }
+.meta dt { color: var(--muted); }
+.meta dd { margin: 0; font-family: var(--f-data); }
+
+.strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.strip > div { background: var(--panel); padding: 12px 14px; display: grid; gap: 2px; }
+.strip .n { font: 600 1.6rem/1.1 var(--f-data); font-variant-numeric: tabular-nums; }
+.strip .alarm .n { color: var(--alarm); }
+.strip .watch .n { color: var(--watch); }
+.strip .review .n { color: var(--review); }
+
+section { padding-block: 34px 0; display: grid; gap: 14px; }
+.sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 20px; }
+.sec-head p { color: var(--muted); max-width: 64ch; font-size: 0.92rem; }
+
+/* pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 0.7rem/1 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 8px; border-radius: 3px; white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.OK { color: var(--ok); background: transparent; padding-inline: 0; }
+.pill.WATCH, .pill.DRIFT { color: var(--watch); background: var(--watch-soft); }
+.pill.ALARM, .pill.STEP_CHANGE { color: var(--alarm); background: var(--alarm-soft); }
+.pill.REVIEW { color: var(--review); background: var(--review-soft); }
+.pill.P1 { color: var(--alarm); background: var(--alarm-soft); }
+.pill.P2 { color: var(--watch); background: var(--watch-soft); }
+.pill.P3 { color: var(--review); background: var(--review-soft); }
+
+/* work orders */
+.orders { display: grid; gap: 10px; }
+.order { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--sev, var(--line)); padding: 12px; cursor: pointer; text-align: left; color: inherit; width: 100%; }
+.order:hover { border-color: var(--steel); border-left-color: var(--sev); }
+.order img { width: 112px; height: 112px; object-fit: cover; display: block; }
+.order .body { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.order .row1 { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.order .tag { font: 600 0.95rem var(--f-data); }
+.order .asset { font-weight: 600; }
+.order .act { color: var(--ink); font-size: 0.93rem; }
+.order .facts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 0.82rem; color: var(--muted); }
+.order .facts b { color: var(--ink); font-family: var(--f-data); font-weight: 500; }
+
+/* route + inspector */
+.route-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.stops { background: var(--panel); border: 1px solid var(--line); }
+.stop { display: grid; grid-template-columns: 22px minmax(0, 1.5fr) 92px 88px 104px; gap: 12px; align-items: center; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); width: 100%; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.stop:last-child { border-bottom: 0; }
+.stop:hover { background: var(--steel-soft); }
+.stop[aria-current="true"] { background: var(--steel-soft); box-shadow: inset 3px 0 0 var(--steel); }
+.stop .seq { font: 500 0.75rem var(--f-data); color: var(--muted); }
+.stop .nm { min-width: 0; }
+.stop .nm b { font: 600 0.85rem var(--f-data); display: block; }
+.stop .nm span { font-size: 0.83rem; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stop .val { font: 500 0.9rem var(--f-data); text-align: right; font-variant-numeric: tabular-nums; }
+.stop .val small { color: var(--muted); font-size: 0.75rem; }
+.stop svg { display: block; }
+.stops-head { display: grid; grid-template-columns: 22px minmax(0, 1.5fr) 92px 88px 104px; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.stops-head .r { text-align: right; }
+
+.inspector { background: var(--panel); border: 1px solid var(--line); padding: 16px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.ins-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap; }
+.ins-head .tag { font: 600 0.85rem var(--f-data); color: var(--muted); }
+.frames { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.frames figure { margin: 0; display: grid; gap: 4px; }
+.frames img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--line); }
+.frames figcaption { font-size: 0.75rem; color: var(--muted); }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+.kv div { display: grid; gap: 2px; }
+.kv .v { font: 500 0.95rem var(--f-data); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.9rem; padding: 10px 12px; background: var(--bg); border-left: 3px solid var(--sev, var(--line)); }
+.note.trend { --sev: var(--watch); }
+.confirm { display: grid; gap: 8px; padding: 12px; background: var(--review-soft); }
+.confirm p { font-size: 0.88rem; }
+.confirm .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.confirm input { font: 500 0.95rem var(--f-data); width: 8rem; padding: 7px 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 3px; }
+.btn { background: var(--steel); color: var(--panel); border: 0; padding: 8px 14px; border-radius: 3px; font-weight: 600; cursor: pointer; }
+.btn:hover { filter: brightness(1.1); }
+.truth { font-size: 0.78rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+
+/* evaluation */
+.eval-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 18px; align-items: start; }
+.tbl-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 620px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: right; }
+th { font: 600 0.7rem/1.25 var(--f-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); vertical-align: bottom; }
+th:first-child, td:first-child { text-align: left; }
+td { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--f-body); }
+tr.all td { font-weight: 600; border-bottom: 0; background: var(--bg); }
+td.miss { color: var(--watch); font-weight: 600; }
+.bar { display: inline-block; height: 6px; background: var(--steel); vertical-align: middle; margin-left: 8px; opacity: 0.55; }
+.facts-box { display: grid; gap: 12px; font-size: 0.9rem; }
+.facts-box .big { font: 600 2rem/1 var(--f-data); color: var(--steel); }
+.facts-box > div { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.facts-box > div:last-child { border-bottom: 0; }
+
+/* flow */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; background: var(--panel); border: 1px solid var(--line); }
+.flow > div { padding: 14px; display: grid; gap: 6px; align-content: start; border-right: 1px solid var(--line); position: relative; }
+.flow > div:last-child { border-right: 0; }
+.flow .who { font: 600 0.68rem var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.flow p { font-size: 0.86rem; color: var(--muted); }
+.flow .new { background: var(--steel-soft); }
+
+.limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 28px; font-size: 0.9rem; }
+.limits div { display: grid; gap: 4px; }
+.limits p { color: var(--muted); }
+
+footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font-size: 0.85rem; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .route-grid, .eval-grid { grid-template-columns: minmax(0, 1fr); }
+  .inspector { position: static; }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow > div { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 560px) {
+  .stop, .stops-head { grid-template-columns: minmax(0, 1fr) 80px 92px; }
+  .stop .seq, .stop svg, .stops-head .seq, .stops-head .spark { display: none; }
+  .order { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
+  .order img { width: 72px; height: 72px; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .inspector { transition: box-shadow 0.2s; }
+}
+</style>
+</head>
+<body>
+
+<div class="concept">
+  <div class="wrap">
+    <strong>Independent concept demo.</strong>
+    <span>Simulated platform, simulated camera frames. Not affiliated with or endorsed by Minerva Humanoids.</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="head-row">
+      <div>
+        <div class="label">Walkdown report · <span id="wd-id"></span></div>
+        <h1>What Roger saw on this walkdown, and what the plant team needs to do about it</h1>
+        <p class="sub">The robot walked the route. This layer read every gauge from its camera, checked each value against limits and history, and turned the result into an action list for the plant team.</p>
+      </div>
+      <dl class="meta" id="meta"></dl>
+    </div>
+    <div class="strip" id="strip"></div>
+  </header>
+
+  <section id="actions">
+    <div class="sec-head">
+      <h2>Action list</h2>
+      <p>Ready to import into the maintenance system. Highest priority first. Select one to see the camera evidence.</p>
+    </div>
+    <div class="orders" id="orders"></div>
+  </section>
+
+  <section id="route">
+    <div class="sec-head">
+      <h2>Route, stop by stop</h2>
+      <p>Normal readings stay grey on purpose so the abnormal ones stand out. The trend line shows the last five walkdowns plus today, with the normal window shaded.</p>
+    </div>
+    <div class="route-grid">
+      <div class="stops" role="list" id="stops">
+        <div class="stops-head label" aria-hidden="true">
+          <span class="seq">#</span><span>Asset</span><span class="spark">Trend</span><span class="r">Reading</span><span>Status</span>
+        </div>
+      </div>
+      <aside class="inspector" id="inspector" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section id="trust">
+    <div class="sec-head">
+      <h2>Can the automatic reads be trusted?</h2>
+      <p id="eval-intro"></p>
+    </div>
+    <div class="eval-grid">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Camera condition</th><th>Reads within tolerance</th><th>Accepted automatically</th>
+            <th>Accepted reads correct</th><th>Bad reads sent to operator</th><th>Median time</th>
+          </tr></thead>
+          <tbody id="eval-body"></tbody>
+        </table>
+      </div>
+      <div class="facts-box" id="eval-facts"></div>
+    </div>
+  </section>
+
+  <section id="fit">
+    <div class="sec-head">
+      <h2>Where this sits in the teleoperation loop</h2>
+      <p>The operator keeps control of the robot. This layer handles the reading, record-keeping and paperwork that would otherwise fall to them after the walkdown.</p>
+    </div>
+    <div class="flow">
+      <div><span class="who">Operator</span><h3>Drives Roger to each stop</h3><p>From the safe area, through the headset, as today.</p></div>
+      <div class="new"><span class="who">This layer</span><h3>Reads the gauge</h3><p>From the head-camera frame, in about 50 ms. Off-axis views are corrected first.</p></div>
+      <div class="new"><span class="who">This layer</span><h3>Decides if it is sure</h3><p>Unclear frames go back to the operator to confirm or re-shoot while Roger is still there.</p></div>
+      <div class="new"><span class="who">This layer</span><h3>Checks limits and history</h3><p>Flags alarms, slow drift and sudden jumps across walkdowns.</p></div>
+      <div class="new"><span class="who">Plant team</span><h3>Gets the action list</h3><p>Work orders with photo evidence, exported to their maintenance system.</p></div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="sec-head"><h2>What this demo does not prove yet</h2></div>
+    <div class="limits">
+      <div><h3>Real footage</h3><p>All frames are rendered, so every read has an exact answer key. The next step is validating on real head-camera frames from a pilot site.</p></div>
+      <div><h3>Gauge variety</h3><p>One dial style is modelled. Real platforms mix dial faces, digital displays, sight glasses and valve positions.</p></div>
+      <div><h3>Finding the gauge</h3><p>Here each frame is already centred on its gauge. In the field, a detector picks the gauge out of the wider camera view and matches it to its asset tag.</p></div>
+      <div><h3>Motion blur</h3><p>The weakest condition: on held-out frames it misses the 99% target. The practical fix is having Roger hold still and re-shoot when confidence is low.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Built by Sapnil as a concept for Roger's pilot walkdowns.</span>
+    <span>Code, evaluation and API: <a href="https://github.com/SapnilPatel/roger-walkdown-insights" rel="noopener">github.com/SapnilPatel/roger-walkdown-insights</a></span>
+  </footer>
+</div>
+
+<script id="walkdown-data" type="application/json">{"platform": {"name": "Demo Platform Alpha", "type": "Offshore production platform (fictional)", "walkdown_id": "WD-0417", "operator_station": "Control room, Deck A (safe area)", "robot": "Humanoid inspection unit, teleoperated", "date": "2026-10-07", "shift": "Day shift"}, "summary": {"stops": 12, "ok": 9, "watch": 1, "alarm": 1, "review": 1, "trend_flags": 2, "hazardous_stops": 11, "processing_seconds": 0.84}, "confidence_threshold": 0.2, "points": [{"tag": "PI-2101", "name": "HP separator pressure", "area": "Separation module, Deck B", "hazard": "Hydrocarbon release zone", "gauge": {"min_value": 0, "max_value": 100, "unit": "bar", "major_step": 10, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [55, 70], "alarm": [40, 85], "condition": "clean", "history": [62, 64, 63, 62, 63], "severity": 0.6, "seed": 10, "reading": {"value": 62.99, "angle_deg": 54.93, "confidence": 0.947, "center": [231.0, 247.0], "radius": 189.3, "method": "hough", "contrast": 0.8629, "dip_width_deg": 4.5}, "frame": "frames/PI-2101.jpg", "frame_annotated": "frames/PI-2101_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.027, "previous_avg": 62.67}, "flags": [], "recommendation": "", "ground_truth": 63.0}, {"tag": "PI-2104", "name": "LP separator pressure", "area": "Separation module, Deck B", "hazard": "Hydrocarbon release zone", "gauge": {"min_value": 0, "max_value": 25, "unit": "bar", "major_step": 5, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [6, 12], "alarm": [3, 18], "condition": "glare", "history": [9.0, 9.4, 9.1, 9.3, 9.2], "severity": 0.6, "seed": 11, "reading": {"value": 9.25, "angle_deg": 125.14, "confidence": 0.36, "center": [240.0, 245.0], "radius": 188.1, "method": "hough", "contrast": 0.2686, "dip_width_deg": 3.0}, "frame": "frames/PI-2104.jpg", "frame_annotated": "frames/PI-2104_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.024, "previous_avg": 9.2}, "flags": [], "recommendation": "", "ground_truth": 9.2}, {"tag": "TI-2210", "name": "Glycol contactor outlet temp", "area": "Gas dehydration, Deck B", "hazard": "Hot surfaces, hydrocarbon zone", "gauge": {"min_value": 0, "max_value": 150, "unit": "°C", "major_step": 25, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [35, 55], "alarm": [20, 75], "condition": "clean", "history": [44, 45, 46, 46, 47], "severity": 0.6, "seed": 12, "reading": {"value": 47.22, "angle_deg": 140.0, "confidence": 0.946, "center": [251.0, 225.0], "radius": 188.3, "method": "hough", "contrast": 0.8689, "dip_width_deg": 4.5}, "frame": "frames/TI-2210.jpg", "frame_annotated": "frames/TI-2210_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.631, "previous_avg": 46.33}, "flags": [], "recommendation": "", "ground_truth": 47.0}, {"tag": "PI-2350", "name": "Compressor discharge pressure", "area": "Gas compression, Deck C", "hazard": "High-pressure gas, noise > 105 dB", "gauge": {"min_value": 0, "max_value": 160, "unit": "bar", "major_step": 20, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [95, 120], "alarm": [80, 135], "condition": "low_light", "history": [112, 115, 118, 121, 124], "severity": 0.6, "seed": 13, "reading": {"value": 128.25, "angle_deg": 8.58, "confidence": 0.95, "center": [248.0, 226.0], "radius": 184.6, "method": "hough", "contrast": 0.7999, "dip_width_deg": 4.5}, "frame": "frames/PI-2350.jpg", "frame_annotated": "frames/PI-2350_seen.jpg", "raw_status": "WATCH", "status": "WATCH", "trend": {"slope_per_walkdown": 3.179, "previous_avg": 121.0, "flag": "DRIFT", "walkdowns_to_alarm": 2.1, "note": "Rising steadily about 3.2 per walkdown. At this rate it reaches the alarm limit (135) in about 2 walkdowns."}, "flags": ["WATCH", "DRIFT"], "recommendation": "Schedule inspection before the next walkdown; review trend with process engineering.", "ground_truth": 128.0}, {"tag": "PI-2352", "name": "Compressor seal gas pressure", "area": "Gas compression, Deck C", "hazard": "High-pressure gas, noise > 105 dB", "gauge": {"min_value": 0, "max_value": 40, "unit": "bar", "major_step": 5, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [18, 26], "alarm": [14, 30], "condition": "blur", "history": [21, 22, 21.5, 21, 22], "severity": 0.6, "seed": 14, "reading": {"value": 21.5, "angle_deg": 79.91, "confidence": 0.958, "center": [235.0, 223.0], "radius": 184.8, "method": "hough", "contrast": 0.8792, "dip_width_deg": 4.5}, "frame": "frames/PI-2352.jpg", "frame_annotated": "frames/PI-2352_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.057, "previous_avg": 21.5}, "flags": [], "recommendation": "", "ground_truth": 21.5}, {"tag": "PI-3101", "name": "Crude export pump suction", "area": "Export pumps, Deck C", "hazard": "Rotating equipment", "gauge": {"min_value": 0, "max_value": 16, "unit": "bar", "major_step": 2, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [3, 8], "alarm": [2, 11], "condition": "clean", "history": [5.5, 5.2, 5.6, 5.3, 5.5], "severity": 0.6, "seed": 15, "reading": {"value": 5.4, "angle_deg": 133.82, "confidence": 0.982, "center": [248.0, 231.0], "radius": 188.3, "method": "hough", "contrast": 0.8665, "dip_width_deg": 4.5}, "frame": "frames/PI-3101.jpg", "frame_annotated": "frames/PI-3101_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.003, "previous_avg": 5.47}, "flags": [], "recommendation": "", "ground_truth": 5.4}, {"tag": "PI-3105", "name": "Crude export pump discharge", "area": "Export pumps, Deck C", "hazard": "Rotating equipment", "gauge": {"min_value": 0, "max_value": 100, "unit": "bar", "major_step": 10, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [60, 80], "alarm": [45, 90], "condition": "smoke", "history": [72, 71, 73, 72, 71], "severity": 0.6, "seed": 16, "reading": {"value": 38.15, "angle_deg": 121.99, "confidence": 0.891, "center": [234.0, 245.0], "radius": 189.3, "method": "hough", "contrast": 0.3776, "dip_width_deg": 4.5}, "frame": "frames/PI-3105.jpg", "frame_annotated": "frames/PI-3105_seen.jpg", "raw_status": "ALARM", "status": "ALARM", "trend": {"slope_per_walkdown": -4.864, "previous_avg": 72.0, "flag": "STEP_CHANGE", "note": "Jumped from about 72.0 to 38.1 since the last walkdowns. Check for a process upset, a stuck valve or a failing transmitter."}, "flags": ["ALARM", "STEP_CHANGE"], "recommendation": "Reading 38.1 bar is below the alarm limit. Notify the control room now and verify against the control-system transmitter. It was steady around 72 bar on previous walkdowns, so this is a sudden change.", "ground_truth": 38.0}, {"tag": "PI-4401", "name": "Wellhead A-3 tubing pressure", "area": "Wellbay, Deck D", "hazard": "H2S area, breathing apparatus required", "gauge": {"min_value": 0, "max_value": 250, "unit": "bar", "major_step": 50, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [140, 190], "alarm": [110, 215], "condition": "clean", "history": [170, 169, 171, 168, 169], "severity": 0.6, "seed": 17, "reading": {"value": 168.42, "angle_deg": 43.11, "confidence": 0.932, "center": [229.0, 236.0], "radius": 186.1, "method": "hough", "contrast": 0.866, "dip_width_deg": 4.5}, "frame": "frames/PI-4401.jpg", "frame_annotated": "frames/PI-4401_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": -0.311, "previous_avg": 169.33}, "flags": [], "recommendation": "", "ground_truth": 168.0}, {"tag": "PI-4402", "name": "Wellhead A-3 annulus (A) pressure", "area": "Wellbay, Deck D", "hazard": "H2S area, breathing apparatus required", "gauge": {"min_value": 0, "max_value": 100, "unit": "bar", "major_step": 10, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [0, 20], "alarm": [0, 35], "condition": "tilt", "history": [10, 11, 11, 12, 12], "severity": 0.6, "seed": 18, "reading": {"value": 12.01, "angle_deg": 192.57, "confidence": 0.964, "center": [227.0, 246.0], "radius": 184.3, "method": "hough+rectified", "contrast": 0.8463, "dip_width_deg": 5.0}, "frame": "frames/PI-4402.jpg", "frame_annotated": "frames/PI-4402_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.401, "previous_avg": 11.67}, "flags": [], "recommendation": "", "ground_truth": 12.0}, {"tag": "PI-5201", "name": "Firewater ring main pressure", "area": "Utilities, Deck A", "hazard": "Low hazard (reference point)", "gauge": {"min_value": 0, "max_value": 25, "unit": "bar", "major_step": 5, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [10, 14], "alarm": [8, 16], "condition": "clean", "history": [12.0, 12.2, 12.1, 12.0, 12.1], "severity": 0.6, "seed": 19, "reading": {"value": 12.12, "angle_deg": 94.06, "confidence": 0.97, "center": [251.0, 234.0], "radius": 189.1, "method": "hough", "contrast": 0.8764, "dip_width_deg": 4.5}, "frame": "frames/PI-5201.jpg", "frame_annotated": "frames/PI-5201_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.006, "previous_avg": 12.07}, "flags": [], "recommendation": "", "ground_truth": 12.1}, {"tag": "PI-5310", "name": "Fuel gas supply pressure", "area": "Utilities, Deck A", "hazard": "Hydrocarbon release zone", "gauge": {"min_value": 0, "max_value": 60, "unit": "bar", "major_step": 10, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [25, 35], "alarm": [18, 42], "condition": "glare", "history": [29, 30, 29, 30, 29], "severity": 1.0, "seed": 1, "reading": {"value": 60.0, "angle_deg": -46.03, "confidence": 0.019, "center": [252.0, 227.0], "radius": 186.2, "method": "hough", "contrast": 0.1995, "dip_width_deg": 38.5}, "frame": "frames/PI-5310.jpg", "frame_annotated": "frames/PI-5310_seen.jpg", "raw_status": "ALARM", "status": "REVIEW", "trend": null, "flags": ["REVIEW"], "recommendation": "Reading not trusted automatically. Operator to confirm from live view; clean or re-shoot the gauge.", "ground_truth": 29.0}, {"tag": "TI-5402", "name": "Lube oil cooler outlet temp", "area": "Utilities, Deck A", "hazard": "Hot surfaces", "gauge": {"min_value": 0, "max_value": 120, "unit": "°C", "major_step": 20, "start_angle_deg": 225.0, "sweep_deg": 270.0}, "normal": [40, 60], "alarm": [30, 75], "condition": "occluded", "history": [50, 51, 52, 51, 52], "severity": 0.6, "seed": 21, "reading": {"value": 52.08, "angle_deg": 107.81, "confidence": 0.74, "center": [242.0, 237.0], "radius": 187.3, "method": "hough", "contrast": 0.3266, "dip_width_deg": 6.0}, "frame": "frames/TI-5402.jpg", "frame_annotated": "frames/TI-5402_seen.jpg", "raw_status": "OK", "status": "OK", "trend": {"slope_per_walkdown": 0.354, "previous_avg": 51.67}, "flags": [], "recommendation": "", "ground_truth": 52.0}], "work_orders": [{"id": "WD-0417-01", "asset_tag": "PI-3105", "asset": "Crude export pump discharge", "area": "Export pumps, Deck C", "priority": "P1", "type": "ALARM", "reading": "38.1 bar", "normal_range": "60-80 bar", "action": "Reading 38.1 bar is below the alarm limit. Notify the control room now and verify against the control-system transmitter. It was steady around 72 bar on previous walkdowns, so this is a sudden change.", "evidence": "frames/PI-3105_seen.jpg"}, {"id": "WD-0417-02", "asset_tag": "PI-2350", "asset": "Compressor discharge pressure", "area": "Gas compression, Deck C", "priority": "P2", "type": "WATCH", "reading": "128.2 bar", "normal_range": "95-120 bar", "action": "Schedule inspection before the next walkdown; review trend with process engineering.", "evidence": "frames/PI-2350_seen.jpg"}, {"id": "WD-0417-03", "asset_tag": "PI-5310", "asset": "Fuel gas supply pressure", "area": "Utilities, Deck A", "priority": "P3", "type": "REVIEW", "reading": "60.0 bar", "normal_range": "25-35 bar", "action": "Reading not trusted automatically. Operator to confirm from live view; clean or re-shoot the gauge.", "evidence": "frames/PI-5310_seen.jpg"}]}</script>
+<script id="eval-data" type="application/json">{"tolerance_pct_full_scale": 2.0, "confidence_threshold": 0.2, "n_calibration": 1050, "n_held_out": 1050, "held_out": {"clean": {"n": 150, "median_err_pct_fs": 0.088, "within_tol_pct": 100.0, "auto_accepted_pct": 100.0, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 0.0, "bad_reads_caught_pct": null, "median_ms": 44.7}, "glare": {"n": 150, "median_err_pct_fs": 0.142, "within_tol_pct": 90.7, "auto_accepted_pct": 88.7, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 11.3, "bad_reads_caught_pct": 100.0, "median_ms": 54.1}, "low_light": {"n": 150, "median_err_pct_fs": 0.138, "within_tol_pct": 100.0, "auto_accepted_pct": 100.0, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 0.0, "bad_reads_caught_pct": null, "median_ms": 90.2}, "blur": {"n": 150, "median_err_pct_fs": 0.212, "within_tol_pct": 96.0, "auto_accepted_pct": 91.3, "auto_accepted_within_tol_pct": 98.5, "sent_to_operator_pct": 8.7, "bad_reads_caught_pct": 66.7, "median_ms": 59.2}, "smoke": {"n": 150, "median_err_pct_fs": 0.096, "within_tol_pct": 100.0, "auto_accepted_pct": 100.0, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 0.0, "bad_reads_caught_pct": null, "median_ms": 46.8}, "tilt": {"n": 150, "median_err_pct_fs": 0.155, "within_tol_pct": 100.0, "auto_accepted_pct": 100.0, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 0.0, "bad_reads_caught_pct": null, "median_ms": 46.0}, "occluded": {"n": 150, "median_err_pct_fs": 0.116, "within_tol_pct": 100.0, "auto_accepted_pct": 100.0, "auto_accepted_within_tol_pct": 100.0, "sent_to_operator_pct": 0.0, "bad_reads_caught_pct": null, "median_ms": 59.2}, "all": {"n": 1050, "median_err_pct_fs": 0.128, "within_tol_pct": 98.1, "auto_accepted_pct": 97.1, "auto_accepted_within_tol_pct": 99.8, "sent_to_operator_pct": 2.9, "bad_reads_caught_pct": 90.0, "median_ms": 53.7}}}</script>
+<script>
+(function () {
+  const W = JSON.parse(document.getElementById("walkdown-data").textContent);
+  const E = JSON.parse(document.getElementById("eval-data").textContent);
+  const points = W.points;
+  const byTag = Object.fromEntries(points.map(p => [p.tag, p]));
+  const COND = { clean: "Clear view", glare: "Glare on glass", low_light: "Low light", blur: "Motion blur", smoke: "Smoke / haze", tilt: "Off-axis view", occluded: "Fogged glass", all: "All conditions" };
+  const SEV = { OK: "var(--ok)", WATCH: "var(--watch)", ALARM: "var(--alarm)", REVIEW: "var(--review)", P1: "var(--alarm)", P2: "var(--watch)", P3: "var(--review)" };
+  const STATUS_TEXT = { OK: "Normal", WATCH: "Watch", ALARM: "Alarm", REVIEW: "Confirm", DRIFT: "Drift", STEP_CHANGE: "Sudden change" };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = (v, p) => {
+    const span = p.gauge.max_value - p.gauge.min_value;
+    return span <= 40 ? v.toFixed(1) : (Math.abs(v - Math.round(v)) < 0.05 ? v.toFixed(0) : v.toFixed(1));
+  };
+  const unit = p => p.gauge.unit;
+  const pill = s => `<span class="pill ${s}">${STATUS_TEXT[s] || s}</span>`;
+
+  // header
+  document.getElementById("wd-id").textContent = W.platform.walkdown_id;
+  const meta = [["Asset", W.platform.name], ["Date", W.platform.date + " · " + W.platform.shift], ["Operator", W.platform.operator_station], ["Stops", W.summary.stops + " gauges"]];
+  document.getElementById("meta").innerHTML = meta.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+
+  function renderStrip() {
+    const s = { ok: 0, watch: 0, alarm: 0, review: 0 };
+    points.forEach(p => s[p.status.toLowerCase()]++);
+    const items = [
+      ["alarm", s.alarm, "Alarm"], ["watch", s.watch, "Watch"], ["review", s.review, "Needs operator confirmation"], ["", s.ok, "Normal"],
+      ["", W.summary.hazardous_stops, "Hazardous-area entries a person didn't make"], ["", W.summary.processing_seconds.toFixed(1) + " s", "To read and analyse all stops"],
+    ];
+    document.getElementById("strip").innerHTML = items.map(([c, n, l]) => `<div class="${c}"><span class="n">${n}</span><span class="label">${l}</span></div>`).join("");
+  }
+
+  // sparkline
+  function spark(p, w = 92, h = 30) {
+    const series = [...p.history];
+    const cur = p.override != null ? p.override : (p.status === "REVIEW" ? null : p.reading.value);
+    const all = cur == null ? series : [...series, cur];
+    const lo = Math.min(p.alarm[0], ...all), hi = Math.max(p.alarm[1], ...all);
+    const pad = (hi - lo) * 0.08 || 1;
+    const y = v => h - 3 - ((v - (lo - pad)) / ((hi + pad) - (lo - pad))) * (h - 6);
+    const n = series.length + 1;
+    const x = i => 3 + i * (w - 6) / (n - 1);
+    const pts = all.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const col = SEV[p.status] || "var(--ok)";
+    const endX = x(n - 1), endY = cur == null ? null : y(cur);
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+      <rect x="0" y="${y(p.normal[1]).toFixed(1)}" width="${w}" height="${Math.max(1, y(p.normal[0]) - y(p.normal[1])).toFixed(1)}" fill="var(--band)"/>
+      <polyline points="${pts}" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-linejoin="round"/>
+      ${endY == null ? `<circle cx="${endX}" cy="${h / 2}" r="3.2" fill="none" stroke="var(--review)" stroke-width="1.5" stroke-dasharray="2 2"/>`
+                     : `<circle cx="${endX}" cy="${endY.toFixed(1)}" r="3.4" fill="${col}"/>`}
+    </svg>`;
+  }
+
+  // work orders
+  function renderOrders() {
+    const orders = W.work_orders.filter(o => !(byTag[o.asset_tag].override != null && byTag[o.asset_tag].status === "OK"));
+    document.getElementById("orders").innerHTML = orders.length ? orders.map(o => {
+      const p = byTag[o.asset_tag];
+      const confirmed = p.override != null;
+      const type = confirmed ? p.status : o.type;
+      const reading = confirmed ? `${fmt(p.override, p)} ${unit(p)} (operator)` : (o.type === "REVIEW" ? "not trusted" : o.reading);
+      return `<button class="order" style="--sev:${SEV[o.priority]}" data-tag="${o.asset_tag}">
+        <img src="${p.frame_annotated}" alt="Camera frame of ${esc(p.name)} with the detected needle drawn on it" loading="lazy">
+        <div class="body">
+          <div class="row1"><span class="pill ${o.priority}">${o.priority}</span><span class="tag">${o.asset_tag}</span><span class="asset">${esc(o.asset)}</span>${pill(type)}${(p.trend && p.trend.flag && !confirmed) ? pill(p.trend.flag) : ""}</div>
+          <p class="act">${esc(confirmed ? p.recommendation_override : o.action)}</p>
+          <div class="facts"><span>Reading <b>${esc(reading)}</b></span><span>Normal <b>${esc(o.normal_range)}</b></span><span>${esc(o.area)}</span><span>Work order <b>${o.id}</b></span></div>
+        </div>
+      </button>`;
+    }).join("") : `<p class="sub">No open actions.</p>`;
+    document.querySelectorAll(".order").forEach(b => b.addEventListener("click", () => { select(b.dataset.tag); document.getElementById("route").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }));
+  }
+
+  // route list
+  let current = (W.work_orders[0] || points[0]).asset_tag || points[0].tag;
+  function renderStops() {
+    const host = document.getElementById("stops");
+    host.querySelectorAll(".stop").forEach(n => n.remove());
+    points.forEach((p, i) => {
+      const b = document.createElement("button");
+      b.className = "stop"; b.setAttribute("role", "listitem"); b.dataset.tag = p.tag;
+      const val = p.override != null ? `${fmt(p.override, p)}` : (p.status === "REVIEW" ? "&ndash;" : fmt(p.reading.value, p));
+      b.innerHTML = `<span class="seq">${String(i + 1).padStart(2, "0")}</span>
+        <span class="nm"><b>${p.tag}</b><span>${esc(p.name)}</span></span>
+        ${spark(p)}
+        <span class="val">${val} <small>${esc(unit(p))}</small></span>
+        <span>${pill(p.status)}</span>`;
+      b.addEventListener("click", () => select(p.tag));
+      host.appendChild(b);
+    });
+    markCurrent();
+  }
+  function markCurrent() {
+    document.querySelectorAll(".stop").forEach(s => s.setAttribute("aria-current", s.dataset.tag === current ? "true" : "false"));
+  }
+
+  function classify(v, p) {
+    if (v < p.alarm[0] || v > p.alarm[1]) return "ALARM";
+    if (v < p.normal[0] || v > p.normal[1]) return "WATCH";
+    return "OK";
+  }
+
+  function select(tag) { current = tag; markCurrent(); renderInspector(); }
+
+  function renderInspector() {
+    const p = byTag[current];
+    const r = p.reading;
+    const ins = document.getElementById("inspector");
+    ins.style.setProperty("--sev", SEV[p.status]);
+    const shown = p.override != null ? `${fmt(p.override, p)} ${unit(p)}` : (p.status === "REVIEW" ? "Not trusted" : `${fmt(r.value, p)} ${unit(p)}`);
+    let html = `<div class="ins-head"><div><span class="tag">${p.tag}</span><h3>${esc(p.name)}</h3></div><div>${pill(p.status)}</div></div>
+      <div class="frames">
+        <figure><img src="${p.frame}" alt="Raw head-camera frame of ${esc(p.name)}"><figcaption>What Roger's camera captured · ${COND[p.condition]}</figcaption></figure>
+        <figure><img src="${p.frame_annotated}" alt="Same frame with the detected dial and needle drawn on it"><figcaption>What the reader detected</figcaption></figure>
+      </div>
+      <div class="kv">
+        <div><span class="label">Reading</span><span class="v">${esc(shown)}</span></div>
+        <div><span class="label">Normal window</span><span class="v">${p.normal[0]}–${p.normal[1]} ${esc(unit(p))}</span></div>
+        <div><span class="label">Confidence</span><span class="v">${r.confidence.toFixed(2)} <small style="color:var(--muted)">(auto-accept ≥ ${W.confidence_threshold.toFixed(2)})</small></span></div>
+        <div><span class="label">Alarm limits</span><span class="v">${p.alarm[0]}–${p.alarm[1]} ${esc(unit(p))}</span></div>
+        <div><span class="label">Area</span><span>${esc(p.area)}</span></div>
+        <div><span class="label">Why a robot</span><span>${esc(p.hazard)}</span></div>
+      </div>`;
+    if (p.status === "REVIEW" && p.override == null) {
+      html += `<div class="confirm" id="confirm-box">
+        <p>The camera frame is too washed out to trust. The machine read <b class="mono">${fmt(r.value, p)} ${esc(unit(p))}</b>, which ${p.raw_status === "ALARM" ? "would have raised a <b>false alarm</b>" : p.raw_status === "WATCH" ? "would have raised a false watch flag" : "may be wrong"}. The operator confirms the value from the live view while Roger is still at the gauge.</p>
+        <form class="row" id="confirm-form">
+          <label class="label" for="confirm-input">Operator reading</label>
+          <input id="confirm-input" type="number" step="any" inputmode="decimal" placeholder="${p.normal[0]}–${p.normal[1]}" required>
+          <span class="mono">${esc(unit(p))}</span>
+          <button class="btn" type="submit">Confirm reading</button>
+        </form>
+      </div>`;
+    } else if (p.override != null) {
+      html += `<div class="note" style="--sev:var(--review)">Confirmed by the operator at ${fmt(p.override, p)} ${esc(unit(p))}. ${esc(p.recommendation_override || "Inside the normal window. No action needed.")}</div>`;
+    } else if (p.recommendation) {
+      html += `<div class="note">${esc(p.recommendation)}</div>`;
+    }
+    if (p.trend && p.trend.note) html += `<div class="note trend"><span class="label">${STATUS_TEXT[p.trend.flag]}</span><br>${esc(p.trend.note)}</div>`;
+    html += `<p class="truth">Demo only: the simulated true value for this frame was ${fmt(p.ground_truth, p)} ${esc(unit(p))}. The pipeline never sees it.</p>`;
+    ins.innerHTML = html;
+
+    const form = document.getElementById("confirm-form");
+    if (form) form.addEventListener("submit", e => {
+      e.preventDefault();
+      const v = parseFloat(document.getElementById("confirm-input").value);
+      if (!isFinite(v) || v < p.gauge.min_value || v > p.gauge.max_value) {
+        document.getElementById("confirm-input").setCustomValidity(`Enter a value between ${p.gauge.min_value} and ${p.gauge.max_value}.`);
+        form.reportValidity(); return;
+      }
+      p.override = v;
+      p.status = classify(v, p);
+      p.recommendation_override = p.status === "OK" ? "Inside the normal window. Work order closed." :
+        p.status === "ALARM" ? "Operator-confirmed alarm. Notify the control room now." : "Operator-confirmed reading outside the normal window. Monitor on the next round.";
+      renderAll();
+    });
+    const inp = document.getElementById("confirm-input");
+    if (inp) inp.addEventListener("input", () => inp.setCustomValidity(""));
+  }
+
+  // evaluation
+  function renderEval() {
+    const h = E.held_out;
+    document.getElementById("eval-intro").textContent =
+      `Measured on ${E.n_held_out.toLocaleString()} held-out frames with random values and random severity, from mild to extreme. Tolerance is ${E.tolerance_pct_full_scale}% of full scale, about the accuracy class of the gauges themselves. The confidence cut-off (${E.confidence_threshold.toFixed(2)}) was chosen on a separate set of ${E.n_calibration.toLocaleString()} frames.`;
+    const order = ["clean", "glare", "low_light", "blur", "smoke", "tilt", "occluded", "all"];
+    const cell = v => v == null ? `<td style="color:var(--muted)">no bad reads</td>` : `<td>${v.toFixed(1)}%</td>`;
+    document.getElementById("eval-body").innerHTML = order.map(k => {
+      const r = h[k];
+      const miss = r.auto_accepted_within_tol_pct != null && r.auto_accepted_within_tol_pct < 99;
+      return `<tr class="${k === "all" ? "all" : ""}"><td>${COND[k]}</td>
+        <td>${r.within_tol_pct.toFixed(1)}%</td>
+        <td>${r.auto_accepted_pct.toFixed(1)}%</td>
+        <td class="${miss ? "miss" : ""}">${r.auto_accepted_within_tol_pct.toFixed(1)}%</td>
+        ${cell(r.bad_reads_caught_pct)}
+        <td>${r.median_ms.toFixed(0)} ms</td></tr>`;
+    }).join("");
+    const a = h.all;
+    document.getElementById("eval-facts").innerHTML = `
+      <div><span class="big">${a.auto_accepted_within_tol_pct.toFixed(1)}%</span><span>of readings accepted without a person were within tolerance.</span></div>
+      <div><span class="big">${a.bad_reads_caught_pct.toFixed(0)}%</span><span>of wrong readings were caught and sent to the operator instead of reaching the report.</span></div>
+      <div><span class="big">${a.sent_to_operator_pct.toFixed(1)}%</span><span>of stops needed the operator to confirm. The rest needed no attention.</span></div>`;
+  }
+
+  function renderAll() { renderStrip(); renderOrders(); renderStops(); renderInspector(); }
+  renderAll();
+  renderEval();
+})();
+</script>
+
+</body>
+</html>
